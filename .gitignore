@@ -4,3 +4,9 @@
 
 # Packages
 node_modules
+
+# Prisma
+prisma
+
+# Build
+lib

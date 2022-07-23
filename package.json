@@ -1,12 +1,21 @@
 {
   "name": "@flaze/prisma-tools",
   "version": "1.0.0",
-  "main": "index.js",
   "repository": "https://github.com/flaze-web/prisma-tools.git",
   "author": "Ingo Andelhofs <ingoandelhofs@gmail.com>",
   "license": "MIT",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "files": [
+    "./lib/**"
+  ],
+  "bin": {
+    "prisma-tools": "./lib/index.js"
+  },
   "scripts": {
-    "dev": "ts-node ./src/index.ts"
+    "dev": "ts-node ./src/index.ts",
+    "build": "sudo rm ./lib -rf && tsc -p .",
+    "install:local": "sudo yarn build && sudo yarn global add \"file:$PWD\""
   },
   "devDependencies": {
     "@types/node": "^18.0.6",
