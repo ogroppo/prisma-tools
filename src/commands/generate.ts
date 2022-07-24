@@ -1,7 +1,8 @@
-import {does_local_json_types_exist, read_local_json_types_file, read_local_prisma_schema_file} from "../files/read";
-import { generate_types } from "../generate/generate";
-import {parse_prisma_schema, PrismaSchemaObject} from "../parsing/parse";
 import fs from "fs";
+import path from "path";
+import { does_local_json_types_exist, read_local_json_types_file, read_local_prisma_schema_file } from "../files/read";
+import { generate_types } from "../generate/generate";
+import { parse_prisma_schema, PrismaSchemaObject } from "../parsing/parse";
 
 
 const remove_custom_json_types = (parsed_prisma_schema: PrismaSchemaObject[]) => {
@@ -59,18 +60,25 @@ export const generate = (outfile: string) => {
 
   const has_custom_json_types = does_local_json_types_exist();
 
-  if (has_custom_json_types) {    
+  let output = "";
+  if (has_custom_json_types) {
     const json_types = read_local_json_types_file();
     const updated = remove_undefined_json_types(parsed_prisma_schema, json_types);
     const out = generate_types(updated);
-
-    const res = "/* Json Types */\n" + json_types.trim() + "\n\n" + out.trim();
-    fs.writeFileSync(outfile, res, {encoding: "utf-8"});
+    output = "/* Json Types */\n" + json_types.trim() + "\n\n" + out.trim();
   }
   else {
     const updated = remove_custom_json_types(parsed_prisma_schema);
-
-    const res = generate_types(updated);
-    fs.writeFileSync(outfile, res.trim(), {encoding: "utf-8"});
+    output = generate_types(updated);
   }
+
+  // Make directory
+  const outdir = path.dirname(outfile);
+
+  if (!fs.existsSync(outdir)) {
+    fs.mkdirSync(outdir, {recursive: true});
+  }
+
+  // Write to file
+  fs.writeFileSync(outfile, output.trim(), { encoding: "utf-8", });
 }

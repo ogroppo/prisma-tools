@@ -126,4 +126,3 @@ export const generate_types = (object: PrismaSchemaObject[]): string => {
 
   return file;
 }
-

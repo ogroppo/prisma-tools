@@ -1,6 +1,7 @@
 # Development
 .vscode
 .idea
+index.d.ts
 
 # Node
 node_modules
