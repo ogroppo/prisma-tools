@@ -9,7 +9,7 @@ const split_on_whitespace = (str: string): string[] => {
 }
 
 
-type PrismaSchemaModelProperty = {
+export type PrismaSchemaModelProperty = {
   name: string;
   type: string;
   custom_type?: string;
