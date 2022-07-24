@@ -2,8 +2,9 @@
 .vscode
 .idea
 
-# Packages
+# Node
 node_modules
+yarn-error.log
 
 # Prisma
 prisma
