@@ -14,6 +14,7 @@ export type PrismaSchemaModelProperty = {
   type: string;
   custom_type?: string;
   optional: boolean;
+  is_array: boolean;
 };
 
 export type PrismaSchemaModel = {
@@ -92,10 +93,14 @@ export const parse_prisma_schema = (schema: string): PrismaSchemaObject[] => {
         const optional = type.endsWith("?");
         const clean_type = optional ? type.slice(0, type.length - 1) : type;
 
+        const is_array = clean_type.endsWith("[]");
+        const clean_type_no_array = is_array ? clean_type.slice(0, clean_type.length - 2) : clean_type;
+
         const property: PrismaSchemaModelProperty = {
           name: name,
-          type: clean_type,
+          type: clean_type_no_array,
           optional: optional,
+          is_array: is_array,
         };
 
         if (custom_type !== null) {

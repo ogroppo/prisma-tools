@@ -11,10 +11,10 @@ const remove_custom_json_types = (parsed_prisma_schema: PrismaSchemaObject[]) =>
       return {
         ...o,
         properties: o.properties.map(p => {
+          delete p.custom_type;
+
           return {
-            name: p.name,
-            optional: p.optional,
-            type: p.type,
+            ...p,
           };
         })
       };
@@ -32,17 +32,14 @@ const remove_undefined_json_types = (parsed_prisma_schema: PrismaSchemaObject[],
         properties: o.properties.map(p => {
           if (p.custom_type && json_file.includes(`type ${p.custom_type}`)) {
             return {
-              name: p.name,
-              optional: p.optional,
-              type: p.type,
-              custom_type: p.custom_type,
+              ...p,
             };
           }
 
+          delete p.custom_type;
+
           return {
-            name: p.name,
-            optional: p.optional,
-            type: p.type,
+            ...p,
           };
         })
       };

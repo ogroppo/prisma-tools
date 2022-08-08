@@ -2,6 +2,43 @@ import { PrismaSchemaModel, PrismaSchemaEnum, PrismaSchemaObject, prisma_type_ma
 import { get_combinations } from "../utils/combinations";
 
 
+const generate_model_with_optional_model_types = (model: PrismaSchemaModel, model_types: string[]) => {
+
+  let out = "";
+
+  out += `export type ${model.name} = {\n`;
+
+  for (const property of model.properties) {
+    const ts_type = prisma_type_map.get(property.type) ?? (property.custom_type ?? property.type);
+
+    // Get type
+    const is_default_type = prisma_type_map.has(property.type);
+
+    if (is_default_type && property.type === "Json" && !!property.custom_type) {
+      property.type = property.custom_type;
+    }
+
+    // Make optional?
+    const is_model_type = model_types.includes(property.type);
+
+    if (is_model_type) {
+      property.optional = true;
+    }
+    
+    if (is_model_type) {
+      out += `  ${property.name}${(property.optional ? "?" : "")}: ${ts_type}${property.is_array ? "[]" : ""}\n`;
+    }
+    else {
+      out += `  ${property.name}: ${ts_type}${property.is_array ? "[]" : ""}${(property.optional ? " | null" : "")}\n`;
+    }
+  }
+
+  out += `}\n`;
+  out += "\n";
+
+  return out;
+}
+
 const generate_model = (model: PrismaSchemaModel) => {
 
   let out = "";
@@ -18,7 +55,7 @@ const generate_model = (model: PrismaSchemaModel) => {
       property.type = property.custom_type;
     }
 
-    out += `  ${property.name}: ${ts_type}${(property.optional ? " | null" : "")}\n`;
+    out += `  ${property.name}: ${ts_type}${property.is_array ? "[]" : ""}${(property.optional ? " | null" : "")}\n`;
     // out += `  ${property.name}${(property.optional ? "?" : "")}: ${ts_type}\n`;
   }
 
@@ -104,15 +141,24 @@ export const generate_types = (object: PrismaSchemaObject[]): string => {
   const models = object.filter(object => object.type === "model") as PrismaSchemaModel[];
   const model_types: string[] = models.map(model => model.name);
 
+  // models.forEach(m => {
+  //   m.properties.forEach(p => {
+  //     console.log(p.type);
+  //   });
+  // });
+
+
   file += "\n";
   file += "/* models */\n";
   
   for (const model of models) {
-    const updated_models = generate_all_models(model, model_types);
+    file += generate_model_with_optional_model_types(model, model_types);
+
+    // const updated_models = generate_all_models(model, model_types);
     
-    for (const updated_model of updated_models) {
-      file += generate_model(updated_model);
-    }
+    // for (const updated_model of updated_models) {
+      // file += generate_model(updated_model);
+    // }
   }
 
   // Enums
