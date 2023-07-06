@@ -79,3 +79,34 @@ export const generate = (outfile: string) => {
   // Write to file
   fs.writeFileSync(outfile, output.trim(), { encoding: "utf-8", });
 }
+
+export const generate2 = (input: string, outfile: string) => {
+
+  const prisma_schema = fs.readFileSync(input, {encoding: "utf-8"});
+
+  const parsed_prisma_schema = parse_prisma_schema(prisma_schema);
+
+  const has_custom_json_types = does_local_json_types_exist();
+
+  let output = "";
+  if (has_custom_json_types) {
+    const json_types = read_local_json_types_file();
+    const updated = remove_undefined_json_types(parsed_prisma_schema, json_types);
+    const out = generate_types(updated);
+    output = "/* Json Types */\n" + json_types.trim() + "\n\n" + out.trim();
+  }
+  else {
+    const updated = remove_custom_json_types(parsed_prisma_schema);
+    output = generate_types(updated);
+  }
+
+  // Make directory
+  const outdir = path.dirname(outfile);
+
+  if (!fs.existsSync(outdir)) {
+    fs.mkdirSync(outdir, {recursive: true});
+  }
+
+  // Write to file
+  fs.writeFileSync(outfile, output.trim(), { encoding: "utf-8", });
+}
