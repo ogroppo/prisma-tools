@@ -1,15 +1,24 @@
-import { PrismaSchemaModel, PrismaSchemaEnum, PrismaSchemaObject, prisma_type_map } from "../parsing/parse";
+import {
+  PrismaSchemaModel,
+  PrismaSchemaEnum,
+  PrismaSchemaObject,
+  prisma_type_map,
+} from "../parsing/parse";
 import { get_combinations } from "../utils/combinations";
 
-
-const generate_model_with_optional_model_types = (model: PrismaSchemaModel, model_types: string[]) => {
-
+const generate_model_with_optional_model_types = (
+  model: PrismaSchemaModel,
+  model_types: string[]
+) => {
   let out = "";
 
   out += `export type ${model.name} = {\n`;
 
   for (const property of model.properties) {
-    const ts_type = prisma_type_map.get(property.type) ?? (property.custom_type ?? property.type);
+    const ts_type =
+      prisma_type_map.get(property.type) ??
+      property.custom_type ??
+      property.type;
 
     // Get type
     const is_default_type = prisma_type_map.has(property.type);
@@ -24,12 +33,15 @@ const generate_model_with_optional_model_types = (model: PrismaSchemaModel, mode
     if (is_model_type) {
       property.optional = true;
     }
-    
+
     if (is_model_type) {
-      out += `  ${property.name}${(property.optional ? "?" : "")}: ${ts_type}${property.is_array ? "[]" : ""}\n`;
-    }
-    else {
-      out += `  ${property.name}: ${ts_type}${property.is_array ? "[]" : ""}${(property.optional ? " | null" : "")}\n`;
+      out += `  ${property.name}${property.optional ? "?" : ""}: ${ts_type}${
+        property.is_array ? "[]" : ""
+      }\n`;
+    } else {
+      out += `  ${property.name}: ${ts_type}${property.is_array ? "[]" : ""}${
+        property.optional ? " | null" : ""
+      }\n`;
     }
   }
 
@@ -37,16 +49,18 @@ const generate_model_with_optional_model_types = (model: PrismaSchemaModel, mode
   out += "\n";
 
   return out;
-}
+};
 
 const generate_model = (model: PrismaSchemaModel) => {
-
   let out = "";
 
   out += `export type ${model.name} = {\n`;
 
   for (const property of model.properties) {
-    const ts_type = prisma_type_map.get(property.type) ?? (property.custom_type ?? property.type);
+    const ts_type =
+      prisma_type_map.get(property.type) ??
+      property.custom_type ??
+      property.type;
 
     // Get type
     const is_default_type = prisma_type_map.has(property.type);
@@ -55,7 +69,9 @@ const generate_model = (model: PrismaSchemaModel) => {
       property.type = property.custom_type;
     }
 
-    out += `  ${property.name}: ${ts_type}${property.is_array ? "[]" : ""}${(property.optional ? " | null" : "")}\n`;
+    out += `  ${property.name}: ${ts_type}${property.is_array ? "[]" : ""}${
+      property.optional ? " | null" : ""
+    }\n`;
     // out += `  ${property.name}${(property.optional ? "?" : "")}: ${ts_type}\n`;
   }
 
@@ -63,10 +79,12 @@ const generate_model = (model: PrismaSchemaModel) => {
   out += "\n";
 
   return out;
-}
+};
 
-const generate_all_models = (model: PrismaSchemaModel, model_types: string[]): PrismaSchemaModel[] => {
-
+const generate_all_models = (
+  model: PrismaSchemaModel,
+  model_types: string[]
+): PrismaSchemaModel[] => {
   // Get all relation props
   const relation_models: string[] = [];
 
@@ -77,7 +95,7 @@ const generate_all_models = (model: PrismaSchemaModel, model_types: string[]): P
   }
 
   const combinations = get_combinations(relation_models);
-  
+
   // Generate models
   const updated_models: PrismaSchemaModel[] = [];
 
@@ -93,33 +111,33 @@ const generate_all_models = (model: PrismaSchemaModel, model_types: string[]): P
       if (empty) {
         type_name += "With";
         empty = false;
-      }
-      else {
+      } else {
         type_name += "And";
       }
 
       const capitalized_name = name[0].toUpperCase() + name.slice(1);
       type_name += capitalized_name;
-
     }
 
     // Update model name
     updated_model.name = type_name;
     // console.log(combination);
 
-    const resulting = relation_models.filter(x => !combination.includes(x));
+    const resulting = relation_models.filter((x) => !combination.includes(x));
 
-    updated_model.properties = updated_model.properties.filter(property => !resulting.includes(property.name));
+    updated_model.properties = updated_model.properties.filter(
+      (property) => !resulting.includes(property.name)
+    );
     updated_models.push(updated_model);
   }
 
   return updated_models;
-}
+};
 
 const generate_enum = (p_enum: PrismaSchemaEnum) => {
   let out = "";
 
-  out += `export const ${p_enum.name}: {\n`;
+  out += `export const ${p_enum.name} = {\n`;
 
   for (const value of p_enum.values) {
     out += `  ${value.name}: '${value.name}',\n`;
@@ -131,15 +149,16 @@ const generate_enum = (p_enum: PrismaSchemaEnum) => {
   out += "\n";
 
   return out;
-}
+};
 
 export const generate_types = (object: PrismaSchemaObject[]): string => {
-
   let file = "";
 
-  // Modles
-  const models = object.filter(object => object.type === "model") as PrismaSchemaModel[];
-  const model_types: string[] = models.map(model => model.name);
+  // Models
+  const models = object.filter(
+    (object) => object.type === "model"
+  ) as PrismaSchemaModel[];
+  const model_types: string[] = models.map((model) => model.name);
 
   // models.forEach(m => {
   //   m.properties.forEach(p => {
@@ -147,22 +166,23 @@ export const generate_types = (object: PrismaSchemaObject[]): string => {
   //   });
   // });
 
-
   file += "\n";
   file += "/* models */\n";
-  
+
   for (const model of models) {
     file += generate_model_with_optional_model_types(model, model_types);
 
     // const updated_models = generate_all_models(model, model_types);
-    
+
     // for (const updated_model of updated_models) {
-      // file += generate_model(updated_model);
+    // file += generate_model(updated_model);
     // }
   }
 
   // Enums
-  const enums = object.filter(object => object.type === "enum") as PrismaSchemaEnum[];
+  const enums = object.filter(
+    (object) => object.type === "enum"
+  ) as PrismaSchemaEnum[];
 
   file += "/* enums */\n";
 
@@ -171,4 +191,4 @@ export const generate_types = (object: PrismaSchemaObject[]): string => {
   }
 
   return file;
-}
+};
